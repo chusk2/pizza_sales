@@ -1,0 +1,33 @@
+pizza_id,pizza_name,pizza_category
+1,hawaiian,classic
+2,classic deluxe,classic
+3,five cheese,veggie
+4,italian supreme,supreme
+5,mexicana,veggie
+6,thai chicken,chicken
+7,prosciutto and arugula,supreme
+8,barbecue chicken,chicken
+9,greek,classic
+10,spinach supreme,supreme
+11,green garden,veggie
+12,italian capocollo,classic
+13,spicy italian,supreme
+14,spinach pesto,veggie
+15,vegetables + vegetables,veggie
+16,southwest chicken,chicken
+17,california chicken,chicken
+18,pepperoni,classic
+19,chicken pesto,chicken
+20,big meat,classic
+21,soppressata,supreme
+22,four cheese,veggie
+23,napolitana,classic
+24,calabrese,supreme
+25,italian vegetables,veggie
+26,mediterranean,veggie
+27,pepper salami,supreme
+28,spinach and feta,veggie
+29,sicilian,supreme
+30,chicken alfredo,chicken
+31,"pepperoni, mushroom, and peppers",classic
+32,brie carre,supreme
