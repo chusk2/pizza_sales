@@ -1,0 +1,234 @@
+---
+title: "pizza_EDA_R"
+output:
+  #pdf_document: default
+  #html_document: default
+  output: md_document
+date: "2024-05-15"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load the necessary libraries and the dataset
+```{r}
+library(tidyverse)
+library(glue)
+# load dataset
+df <- read_csv('pizza_sales_clean.csv')
+```
+
+
+
+## KPI analysis
+
+## Total Revenue
+
+```{r}
+glue('The total sales is ${round(sum(df$total_price), 2)}')
+```
+
+## Average Order Value
+
+```{r}
+glue('The total sales is ${round(mean(df$total_price), 2)}')
+```
+
+## Total Pizza Sold
+
+```{r}
+glue('The total number of pizzas sold is {sum(df$quantity)}.')
+```
+
+## Total Orders
+
+```{r}
+glue('A total of {nrow(df)} were placed.')
+```
+## Average Pizzas Per Order
+
+```{r}
+glue('The average number of pizzas ordered by order is {round(mean(df$quantity), 2)}')
+```
+
+# Sales Performance Analysis
+
+## What is the average unit price and revenue of pizza across different categories?
+
+```{r}
+df %>% group_by(pizza_category) %>% summarise(
+	avg_unit_price = round(mean(unit_price),2),
+	avg_revenue = round(mean(total_price),2 ) )
+```
+
+## What is the average unit price and revenue of pizza across different sizes?
+
+```{r}
+# convert the size to a factor variable
+df$pizza_size <- factor(df$pizza_size,
+						levels = unlist(str_split('S M L XL XXL', ' ')),
+						ordered=T)
+df %>% group_by(pizza_size) %>% summarise(
+	avg_unit_price = round(mean(unit_price),2),
+	avg_revenue = round(mean(total_price),2 ) )
+```
+
+## What is the average unit price and revenue of most sold 3 pizzas?
+
+```{r}
+df %>% group_by(pizza_name) %>% summarise(
+	units_sold = sum(quantity),
+	avg_unit_price = round(mean(unit_price),2),
+	avg_revenue = round(mean(total_price),2 ) ) %>%
+	arrange(-units_sold) %>% head(3)
+```
+# Seasonal Analysis
+
+## Which days of the week have the highest number of orders?
+
+```{r}
+library(lubridate)
+df %>% group_by(week_day = wday(df$order_timestamp, label=T, abbr = F)) %>% 
+	summarise(total_pizzas_ordered = sum(quantity)) %>% arrange(-total_pizzas_ordered)
+```
+
+## At what time do most orders occur?
+
+```{r}
+df %>% group_by(day_hour = hour(df$order_timestamp)) %>% 
+	summarise(total_pizzas_ordered = sum(quantity)) %>% arrange(-total_pizzas_ordered)
+```
+
+## Which month has the highest revenue?
+
+```{r}
+df %>% group_by(month = month(df$order_timestamp,
+							  label=T, abbr=F)) %>% 
+	summarise(total_revenue = sum(total_price)) %>% arrange(-total_revenue)
+```
+
+## Which season has the highest revenue?
+
+```{r}
+# function to classify the month
+classifySeason <- function(month) {
+  # Ensure the input is in lowercase for uniformity
+  month <- tolower(month)
+  
+  # Use switch statement to determine the season
+  season <- switch(month,
+                   "january" = "Winter",
+                   "february" = "Winter",
+                   "march" = "Spring",
+                   "april" = "Spring",
+                   "may" = "Spring",
+                   "june" = "Summer",
+                   "july" = "Summer",
+                   "august" = "Summer",
+                   "september" = "Autumn",
+                   "october" = "Autumn",
+                   "november" = "Autumn",
+                   "december" = "Winter",
+                   "Unknown month")  # Default case if the month doesn't match
+  return(season)
+}
+```
+
+```{r}
+# create a copy of the dataset
+df2 <- df
+
+# get the season
+df2$season <- sapply(month(df2$order_timestamp, label=T, abbr=F),
+					 FUN=classifySeason)
+
+# get the ranking
+df2 %>% group_by(season) %>% summarise(
+	total_revenue = sum(total_price) ) %>% arrange(-total_revenue)
+
+# remove the copy of the dataset
+rm(df2)
+```
+
+# Customer Behavior Analysis
+
+## Which pizza is the favorite of customers (most ordered pizza)?
+
+```{r}
+df %>% group_by(pizza_name) %>% summarise(pizzas_ordered = sum(quantity)) %>% arrange(-pizzas_ordered)
+```
+
+## Which pizza is ordered the most number of times?
+
+```{r}
+most_ordered_pizza <- df %>% group_by(pizza_name) %>% summarise(times_ordered = sum(quantity)) %>% arrange(-times_ordered) %>% head(1)
+
+glue('The most ordered pizza is {most_ordered_pizza$pizza_name}. It was ordered {most_ordered_pizza$times_ordered} times.')
+```
+
+## Which pizza size is preferred by customers?
+
+```{r}
+sizes_value_counts <- table(df$pizza_size)
+most_ordered <- sizes_value_counts[
+	which(sizes_value_counts == max(sizes_value_counts)) ]
+glue('The preferred pizza size is {names(most_ordered)}, ordered {unname(most_ordered)} times.')
+```
+
+## Which pizza category is preferred by customers?
+
+```{r}
+categories_value_counts <- table(df$pizza_category)
+most_ordered <- categories_value_counts[
+	which(categories_value_counts == max(categories_value_counts)) ]
+glue('The preferred pizza category is {names(most_ordered)}, ordered {unname(most_ordered)} times.')
+
+```
+
+# Pizza Analysis
+
+## The pizza with the least price and highest price
+
+```{r}
+# get list of pizzas and their prices
+pizza_names_prices <- unique(df[c("pizza_name", "unit_price")])
+# cheapest one
+cheapest_pizza = pizza_names_prices %>%
+	filter(unit_price == min(pizza_names_prices$unit_price) )
+# most expensive one
+expensive_pizza = pizza_names_prices %>%
+	filter(unit_price == max(pizza_names_prices$unit_price) )
+											   
+glue('The cheapest pizza is {cheapest_pizza$pizza_name} (${cheapest_pizza$unit_price}).')
+
+glue('The most expensive pizza is {expensive_pizza$pizza_name} (${expensive_pizza$unit_price}).')
+```
+
+## Number of pizzas per category
+
+```{r}
+df %>% group_by(pizza_category) %>% summarise(
+	total_pizzas_ordered = sum(quantity) ) %>%
+	arrange(-total_pizzas_ordered)
+```
+
+## Number of pizzas per size
+
+```{r}
+df %>% group_by(pizza_size) %>% summarise(
+	total_pizzas_ordered = sum(quantity) ) %>%
+	arrange(-total_pizzas_ordered)
+```
+
+## Pizzas with more than one category
+
+```{r}
+pizza_more_1_category =any(
+	table(
+		unique(df[c('pizza_name', 'pizza_category')])
+		) > 1
+	) 
+glue('Are there any pizzas belonging to more than one category? {pizza_more_1_category}')
+```
+

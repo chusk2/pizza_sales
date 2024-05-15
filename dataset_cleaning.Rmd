@@ -1,0 +1,78 @@
+---
+title: "Pizza Dataset Cleaning"
+output: html_document
+date: "2024-05-15"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries and the dataset
+```{r}
+library(readxl)
+library(tidyverse)
+library(glue)
+df <- read_excel('pizza_sales.xlsx')
+```
+
+## Get column names
+```{r}
+names(df)
+```
+## Head of dataframe
+```{r}
+head(df)
+```
+## Get a sample of the *pizza_name* column
+```{r}
+sample(df$pizza_name, 5)
+```
+I will remove the words *'The'* and *'Pizza'*
+```{r}
+pizza_names <- sapply(df$pizza_name,
+					  FUN=function(x) tolower(
+					  	substring(x, 5,(nchar(x)-6))
+					  	) )
+names(pizza_names) <- NULL
+df$pizza_name <- pizza_names
+```
+
+## Drop some columns:
+I don't need the following columns: order_details_id, order_id and pizza_id
+
+```{r}
+df<- df %>% select(-c(order_details_id, order_id, pizza_id)) %>%
+	select(order_date, order_time, pizza_name, pizza_size, unit_price, quantity, total_price, pizza_category, pizza_ingredients)
+```
+
+## Combine date and time to create a timestamp for the order
+```{r}
+library(lubridate)
+df$order_timestamp <- paste(
+	ymd(df$order_date), format(df$order_time, '%H:%M:%S')
+)
+
+# convert to timestamp
+df$order_timestamp <- ymd_hms(df$order_timestamp)
+```
+
+## Drop some columns and reorder them
+```{r}
+df <- df %>% select(order_timestamp, pizza_name, pizza_size, unit_price, quantity, total_price, pizza_category, pizza_ingredients)
+```
+
+Get a sample of the dataset:
+
+```{r}
+sample_n(df, 10)
+```
+
+## Export to csv:
+```{r}
+df <- df %>% arrange(order_timestamp)
+write_csv(df, 'pizza_sales_clean.csv')
+```
+
+
+
