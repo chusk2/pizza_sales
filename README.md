@@ -3,6 +3,7 @@
 
 # &#10004; Stage 1. Database creation and Normalization of   
 # &#10004; Stage 2. EDA performed with PostgreSQL
+# &#10004; Stage 3. EDA performed with R
 
 ## Exploratory Data Analysis
 
